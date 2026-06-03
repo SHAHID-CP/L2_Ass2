@@ -1,10 +1,21 @@
 import type { NextFunction, Request, Response } from "express";
 import { sendError } from "../utility/sendResponse";
 import { StatusCodes } from "http-status-codes";
+import config from "../config";
 
 export const globalErrorHandler = (err: any,req: Request,res: Response,next: NextFunction) => {
 
-return sendError(res,StatusCodes.INTERNAL_SERVER_ERROR,err.message || "Internal Server Error",err)
+if(config.node_env === 'development'){
+return sendError(res,
+    err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR,
+    err.message || "Internal Server Error",
+    err)
+}else{
+return sendError(res,
+    err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR,
+    err.isOperational ? err.message || "Internal Server Error" : 'Something went very wrong!'
+)
+}
 };
 
 export const notFound = (req: Request, res: Response) => {
