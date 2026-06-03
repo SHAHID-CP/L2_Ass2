@@ -1,0 +1,64 @@
+import type { Request, Response } from 'express';
+import { StatusCodes } from 'http-status-codes';
+import bcrypt from "bcryptjs";
+import { createUser, findUserByEmail } from './auth.service';
+import { sendError, sendSuccess } from '../../utility/sendResponse';
+import { generateAccessToken } from '../../utility/generateAccesToken';
+import { allowedRoles } from '../../types';
+
+
+
+//signup
+export const signup = async (req: Request, res: Response)=> {
+  const { name, email, password, role } = req.body;
+
+  if (!name || !email || !password) return sendError(res, StatusCodes.BAD_REQUEST, 'name, email, password required');
+  if (role && !allowedRoles.includes(role)) return sendError(res, StatusCodes.BAD_REQUEST, 'role must be contributor or maintainer');
+  if (password.length < 8) return sendError(res, StatusCodes.BAD_REQUEST, 'Password must be at least 8 charecters');
+  
+  try {
+    // Duplicate email account cheak
+    const existing = await findUserByEmail(email);
+    if (existing) return sendError(res, StatusCodes.BAD_REQUEST, 'This email already registered');
+
+    const user = await createUser({ name, email, password, role });
+    return sendSuccess(res, StatusCodes.CREATED, 'User registered successfully', user);
+  } catch (err) {
+    return sendError(res, StatusCodes.INTERNAL_SERVER_ERROR, 'Server error', err);
+  }
+};
+
+
+
+
+//login
+export const login = async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+  if (!email || !password) return sendError(res, StatusCodes.BAD_REQUEST, 'email and password required');
+
+  try {
+    const user = await findUserByEmail(email);
+    if (!user) return sendError(res, StatusCodes.UNAUTHORIZED, 'Invalid credentials');
+
+    // Password match
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return sendError(res, StatusCodes.UNAUTHORIZED, 'Invalid credentials');
+
+    // JWT make
+    const token = generateAccessToken({id: user.id,name:user.name,role:user.role})
+
+    return sendSuccess(res, StatusCodes.OK, 'Login successful', {
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        created_at: user.created_at,
+        updated_at: user.updated_at,
+      },
+    });
+  } catch (err) {
+    return sendError(res, StatusCodes.INTERNAL_SERVER_ERROR, 'Server error', err);
+  }
+};
