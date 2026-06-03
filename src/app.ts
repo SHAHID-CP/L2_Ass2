@@ -5,7 +5,7 @@ import CookieParser from "cookie-parser";
 
 import { authRoutes } from "./modules/auth/auth.route";
 import { issueRoutes } from "./modules/issues/issues.route";
-import globalErrorHandler from "./middleware/globalErrorHandeler";
+import {globalErrorHandler, notFound} from "./middleware/globalErrorHandeler";
 
 
 
@@ -28,10 +28,13 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
-
+//Api End poit
 app.use('/api/auth', authRoutes);
 app.use('/api/issues', issueRoutes);
 
+//Global midleware
+app.use(notFound);
 app.use(globalErrorHandler);
+
 
 export default app;
