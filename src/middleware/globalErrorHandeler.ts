@@ -9,7 +9,7 @@ if(config.node_env === 'development'){
 return sendError(res,
     err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR,
     err.message || "Internal Server Error",
-    err)
+    {name:err.name,stack: err.stack})
 }else{
 return sendError(res,
     err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR,
