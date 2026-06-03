@@ -1,4 +1,4 @@
-import type { Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import bcrypt from "bcryptjs";
 import { createUser, findUserByEmail } from './auth.service';
@@ -9,7 +9,7 @@ import { allowedRoles } from '../../types';
 
 
 //signup
-export const signup = async (req: Request, res: Response)=> {
+export const signup = async (req: Request, res: Response, next: NextFunction)=> {
   const { name, email, password, role } = req.body;
 
   if (!name || !email || !password) return sendError(res, StatusCodes.BAD_REQUEST, 'name, email, password required');
@@ -24,7 +24,7 @@ export const signup = async (req: Request, res: Response)=> {
     const user = await createUser({ name, email, password, role });
     return sendSuccess(res, StatusCodes.CREATED, 'User registered successfully', user);
   } catch (err) {
-    return sendError(res, StatusCodes.INTERNAL_SERVER_ERROR, 'Server error', err);
+    return next(err);
   }
 };
 
@@ -32,7 +32,7 @@ export const signup = async (req: Request, res: Response)=> {
 
 
 //login
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response, next: NextFunction) => {
   const { email, password } = req.body;
   if (!email || !password) return sendError(res, StatusCodes.BAD_REQUEST, 'email and password required');
 
@@ -59,6 +59,6 @@ export const login = async (req: Request, res: Response) => {
       },
     });
   } catch (err) {
-    return sendError(res, StatusCodes.INTERNAL_SERVER_ERROR, 'Server error', err);
+    return next(err);
   }
 };
