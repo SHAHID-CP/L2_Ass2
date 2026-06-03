@@ -1,13 +1,6 @@
 import {pool} from '../../db';
 import bcrypt from "bcryptjs";
-
-export interface CreateUserInput {
-  name: string;
-  email: string;
-  password: string;
-  role?: 'contributor' | 'maintainer';
-}
-
+import type { CreateUserInput } from './auth.interface';
 
 
 // new user make
