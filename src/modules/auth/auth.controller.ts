@@ -5,6 +5,7 @@ import { createUser, findUserByEmail } from './auth.service';
 import { AppError, sendError, sendSuccess } from '../../utility/sendResponse';
 import { generateAccessToken } from '../../utility/generateAccesToken';
 import { allowedRoles } from '../../types';
+import type { ILoginResponse, IUserResponse } from './auth.interface';
 
 
 
@@ -22,7 +23,7 @@ export const signup = async (req: Request, res: Response, next: NextFunction)=> 
     if (existing) throw new AppError(StatusCodes.BAD_REQUEST, 'This email already registered');
 
     const user = await createUser({ name, email, password, role });
-    return sendSuccess(res, StatusCodes.CREATED, 'User registered successfully', user);
+    return sendSuccess<IUserResponse>(res, StatusCodes.CREATED, 'User registered successfully', user);
   } catch (err) {
     return next(err);
   }
@@ -47,7 +48,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     // JWT make
     const token = generateAccessToken({id: user.id,name:user.name,role:user.role})
 
-    return sendSuccess(res, StatusCodes.OK, 'Login successful', {
+    return sendSuccess<ILoginResponse>(res, StatusCodes.OK, 'Login successful', {
       token,
       user: {
         id: user.id,

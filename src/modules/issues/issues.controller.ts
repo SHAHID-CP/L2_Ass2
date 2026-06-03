@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import {createIssue,getAllIssues,updateIssue,deleteIssue, findIssueById, getRawIssue,} from './issues.service';
 import { AppError, sendError, sendSuccess } from '../../utility/sendResponse';
 import { USER_ROLE } from '../../types';
+import type { IIssue, IIssueResponse, IssueQuery } from './issues.interface';
 
 
 
@@ -21,7 +22,7 @@ export const createIssueHandler = async (req: Request,res: Response, next: NextF
 
   try {
     const issue = await createIssue(title, description, type, reporter_id as number);
-    return sendSuccess(res, StatusCodes.CREATED, 'Issue created successfully', issue);
+    return sendSuccess<IIssue>(res, StatusCodes.CREATED, 'Issue created successfully', issue);
   } catch (err) {
     return next(err);
   }
@@ -31,7 +32,7 @@ export const createIssueHandler = async (req: Request,res: Response, next: NextF
 
 // 2 GET /api/issues
 export const getAllIssuesHandler = async (req: Request,res: Response, next: NextFunction) => {
-  const { sort, type, status }  = req.query
+  const { sort, type, status }  = req.query as IssueQuery
 
   // Query param validation
   if(sort && !["newest", "oldest"].includes(sort as string)) throw new AppError(StatusCodes.BAD_REQUEST, 'sort must be newest or oldest');
@@ -40,7 +41,7 @@ export const getAllIssuesHandler = async (req: Request,res: Response, next: Next
 
   try {
     const data = await getAllIssues(req.query);
-    return sendSuccess(res,StatusCodes.OK,"Issues retrived successfully",data);
+    return sendSuccess<IIssueResponse[]>(res,StatusCodes.OK,"Issues retrived successfully",data);
   } catch (err) {
     return next(err);
   }
@@ -58,7 +59,7 @@ export const getIssueByIdHandler = async (req: Request,res: Response, next: Next
   try {
     const data = await findIssueById(id);
     if (!data) throw new AppError(StatusCodes.NOT_FOUND, 'Issue not found');
-    return sendSuccess(res, StatusCodes.OK, 'Issue retrived successfully', data);
+    return sendSuccess<IIssueResponse>(res, StatusCodes.OK, 'Issue retrived successfully', data);
 
   } catch (err) {
     return next(err);
@@ -110,7 +111,7 @@ export const updateIssueHandler = async (req: Request,res: Response, next: NextF
     if (status && user?.role === USER_ROLE.maintainer) updateFields.status = status;
 
     const updated = await updateIssue(id, updateFields);
-    return sendSuccess(res, StatusCodes.OK, 'Issue updated successfully', updated);
+    return sendSuccess<IIssue>(res, StatusCodes.OK, 'Issue updated successfully', updated);
   } catch (err) {
     return next(err);
   }
@@ -129,7 +130,7 @@ export const deleteIssueHandler = async (req: Request,res: Response, next: NextF
     if (!issue) throw new AppError(StatusCodes.NOT_FOUND, 'Issue not found');
 
     const deleted = await deleteIssue(id);
-    if (deleted.rows.length === 0) return sendSuccess(res, StatusCodes.OK, 'Issue deleted successfully');
+    if (deleted.rows.length === 0) return sendSuccess(res, StatusCodes.NO_CONTENT, 'Issue deleted successfully');
   } catch (err) {
     return next(err);
   }
