@@ -1,4 +1,4 @@
-import type { Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import {createIssue,getAllIssues,updateIssue,deleteIssue, findIssueById, getRawIssue,} from './issues.service';
 import { sendError, sendSuccess } from '../../utility/sendResponse';
@@ -7,7 +7,7 @@ import { USER_ROLE } from '../../types';
 
 
 // 1 POST /api/issues
-export const createIssueHandler = async (req: Request,res: Response) => {
+export const createIssueHandler = async (req: Request,res: Response, next: NextFunction) => {
   const { title, description, type } = req.body;
   const reporter_id = req.user?.id;
 
@@ -21,14 +21,14 @@ export const createIssueHandler = async (req: Request,res: Response) => {
     const issue = await createIssue(title, description, type, reporter_id as number);
     return sendSuccess(res, StatusCodes.CREATED, 'Issue created successfully', issue);
   } catch (err) {
-    return sendError(res, StatusCodes.INTERNAL_SERVER_ERROR, 'Server error', err);
+    return next(err);
   }
 };
 
 
 
 // 2 GET /api/issues
-export const getAllIssuesHandler = async (req: Request,res: Response) => {
+export const getAllIssuesHandler = async (req: Request,res: Response, next: NextFunction) => {
   const { sort, type, status }  = req.query
 
   // Query param validation
@@ -40,14 +40,14 @@ export const getAllIssuesHandler = async (req: Request,res: Response) => {
     const data = await getAllIssues(req.query);
     return sendSuccess(res,StatusCodes.OK,"Issues retrived successfully",data);
   } catch (err) {
-    return sendError(res, StatusCodes.INTERNAL_SERVER_ERROR, 'Server error', err);
+    return next(err);
   }
 };
 
 
 
 // 3 GET /api/issues/:id
-export const getIssueByIdHandler = async (req: Request,res: Response)=> {
+export const getIssueByIdHandler = async (req: Request,res: Response, next: NextFunction)=> {
 
   // validation cheack
   const id = parseInt(req.params.id as string);
@@ -59,7 +59,7 @@ export const getIssueByIdHandler = async (req: Request,res: Response)=> {
     return sendSuccess(res, StatusCodes.OK, 'Issue retrived successfully', data);
 
   } catch (err) {
-    return sendError(res, StatusCodes.INTERNAL_SERVER_ERROR, 'Server error', err);
+    return next(err);
   }
 };
 
@@ -67,7 +67,7 @@ export const getIssueByIdHandler = async (req: Request,res: Response)=> {
 
 
 // 4 PATCH /api/issues/:id
-export const updateIssueHandler = async (req: Request,res: Response) => {
+export const updateIssueHandler = async (req: Request,res: Response, next: NextFunction) => {
   const id = parseInt(req.params.id as string);
   const { title, description, type, status } = req.body;
   const user = req.user;
@@ -109,15 +109,15 @@ export const updateIssueHandler = async (req: Request,res: Response) => {
 
     const updated = await updateIssue(id, updateFields);
     return sendSuccess(res, StatusCodes.OK, 'Issue updated successfully', updated);
-  } catch (err :any) {
-    return sendError(res, StatusCodes.INTERNAL_SERVER_ERROR, err.message || 'Server opore error', err);
+  } catch (err) {
+    return next(err);
   }
 };
 
 
 
 // 5 DELETE /api/issues/:id
-export const deleteIssueHandler = async (req: Request,res: Response)=> {
+export const deleteIssueHandler = async (req: Request,res: Response, next: NextFunction)=> {
   //Validation cheak
   const id = parseInt(req.params.id as string);
   if (isNaN(id)) return sendError(res, StatusCodes.BAD_REQUEST, 'Invalid issue ID');
@@ -129,6 +129,6 @@ export const deleteIssueHandler = async (req: Request,res: Response)=> {
     const deleted = await deleteIssue(id);
     if (deleted.rows.length === 0) return sendSuccess(res, StatusCodes.OK, 'Issue deleted successfully');
   } catch (err) {
-    return sendError(res, StatusCodes.INTERNAL_SERVER_ERROR, 'Server error', err);
+    return next(err);
   }
 };
