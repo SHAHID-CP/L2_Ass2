@@ -1,4 +1,5 @@
 import { pool } from "../../db";
+import { AppError } from "../../utility/sendResponse";
 import type { IssueQuery } from "./issues.interface";
 
 // 1 Issue create
@@ -36,7 +37,7 @@ export const getAllIssues = async (query:IssueQuery) => {
   const issuesResult = await pool.query(queryText, queryParams);
   const issues = issuesResult.rows;
 
-  if (issues.length === 0) return [];
+  if (issues.length === 0)  throw new AppError(404,"Data not found");
   //Issue er moddhe theke jara report korse tader id collect[1,2,2,3,4,4]
   const reporterId = issues.map((issue) => issue.reporter_id);
   
