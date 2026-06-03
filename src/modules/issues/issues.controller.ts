@@ -16,6 +16,8 @@ export const createIssueHandler = async (req: Request,res: Response, next: NextF
   if (title.length > 150) return sendError(res, StatusCodes.BAD_REQUEST, 'Invalid title (max 150 chars)');
   if (description.length < 20) return sendError(res, StatusCodes.BAD_REQUEST, 'Description must be at least 20 chars');
   if (!['bug', 'feature_request'].includes(type)) return sendError(res, StatusCodes.BAD_REQUEST, 'type must be bug or feature_request');
+  if (!reporter_id) return sendError(res,StatusCodes.UNAUTHORIZED,"Reporter id not found")
+
 
   try {
     const issue = await createIssue(title, description, type, reporter_id as number);
