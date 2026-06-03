@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import bcrypt from "bcryptjs";
 import { createUser, findUserByEmail } from './auth.service';
-import { sendError, sendSuccess } from '../../utility/sendResponse';
+import { AppError, sendError, sendSuccess } from '../../utility/sendResponse';
 import { generateAccessToken } from '../../utility/generateAccesToken';
 import { allowedRoles } from '../../types';
 
@@ -12,14 +12,14 @@ import { allowedRoles } from '../../types';
 export const signup = async (req: Request, res: Response, next: NextFunction)=> {
   const { name, email, password, role } = req.body;
 
-  if (!name || !email || !password) return sendError(res, StatusCodes.BAD_REQUEST, 'name, email, password required');
-  if (role && !allowedRoles.includes(role)) return sendError(res, StatusCodes.BAD_REQUEST, 'role must be contributor or maintainer');
-  if (password.length < 8) return sendError(res, StatusCodes.BAD_REQUEST, 'Password must be at least 8 charecters');
+  if (!name || !email || !password) throw new AppError(StatusCodes.BAD_REQUEST, 'name, email, password required');
+  if (role && !allowedRoles.includes(role)) throw new AppError(StatusCodes.BAD_REQUEST, 'role must be contributor or maintainer');
+  if (password.length < 8) throw new AppError(StatusCodes.BAD_REQUEST, 'Password must be at least 8 charecters');
   
   try {
     // Duplicate email account cheak
     const existing = await findUserByEmail(email);
-    if (existing) return sendError(res, StatusCodes.BAD_REQUEST, 'This email already registered');
+    if (existing) throw new AppError(StatusCodes.BAD_REQUEST, 'This email already registered');
 
     const user = await createUser({ name, email, password, role });
     return sendSuccess(res, StatusCodes.CREATED, 'User registered successfully', user);
@@ -34,15 +34,15 @@ export const signup = async (req: Request, res: Response, next: NextFunction)=> 
 //login
 export const login = async (req: Request, res: Response, next: NextFunction) => {
   const { email, password } = req.body;
-  if (!email || !password) return sendError(res, StatusCodes.BAD_REQUEST, 'email and password required');
+  if (!email || !password) throw new AppError(StatusCodes.BAD_REQUEST, 'email and password required');
 
   try {
     const user = await findUserByEmail(email);
-    if (!user) return sendError(res, StatusCodes.UNAUTHORIZED, 'Invalid credentials');
+    if (!user) throw new AppError(StatusCodes.UNAUTHORIZED, 'Invalid credentials');
 
     // Password match
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return sendError(res, StatusCodes.UNAUTHORIZED, 'Invalid credentials');
+    if (!isMatch) throw new AppError(StatusCodes.UNAUTHORIZED, 'Invalid credentials');
 
     // JWT make
     const token = generateAccessToken({id: user.id,name:user.name,role:user.role})

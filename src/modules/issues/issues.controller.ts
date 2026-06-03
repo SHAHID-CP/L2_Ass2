@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import {createIssue,getAllIssues,updateIssue,deleteIssue, findIssueById, getRawIssue,} from './issues.service';
-import { sendError, sendSuccess } from '../../utility/sendResponse';
+import { AppError, sendError, sendSuccess } from '../../utility/sendResponse';
 import { USER_ROLE } from '../../types';
 
 
@@ -12,11 +12,11 @@ export const createIssueHandler = async (req: Request,res: Response, next: NextF
   const reporter_id = req.user?.id;
 
     //Validation
-  if (!title || !description || !type) return sendError(res, StatusCodes.BAD_REQUEST, 'title, description, type required');
-  if (title.length > 150) return sendError(res, StatusCodes.BAD_REQUEST, 'Invalid title (max 150 chars)');
-  if (description.length < 20) return sendError(res, StatusCodes.BAD_REQUEST, 'Description must be at least 20 chars');
-  if (!['bug', 'feature_request'].includes(type)) return sendError(res, StatusCodes.BAD_REQUEST, 'type must be bug or feature_request');
-  if (!reporter_id) return sendError(res,StatusCodes.UNAUTHORIZED,"Reporter id not found")
+  if (!title || !description || !type) throw new AppError(StatusCodes.BAD_REQUEST, 'title, description, type required');
+  if (title.length > 150) throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid title (max 150 chars)');
+  if (description.length < 20) throw new AppError(StatusCodes.BAD_REQUEST, 'Description must be at least 20 chars');
+  if (!['bug', 'feature_request'].includes(type)) throw new AppError(StatusCodes.BAD_REQUEST, 'type must be bug or feature_request');
+  if (!reporter_id) throw new AppError(StatusCodes.UNAUTHORIZED,"Reporter id not found")
 
 
   try {
@@ -34,9 +34,9 @@ export const getAllIssuesHandler = async (req: Request,res: Response, next: Next
   const { sort, type, status }  = req.query
 
   // Query param validation
-  if(sort && !["newest", "oldest"].includes(sort as string)) return sendError(res, StatusCodes.BAD_REQUEST, 'sort must be newest or oldest');
-  if (type && !['bug', 'feature_request'].includes(type as string)) return sendError(res, StatusCodes.BAD_REQUEST, 'type must be bug or feature_request');
-  if (status && !['open', 'in_progress', 'resolved'].includes(status as string)) return sendError(res, StatusCodes.BAD_REQUEST, 'status must be open, in_progress or resolved');
+  if(sort && !["newest", "oldest"].includes(sort as string)) throw new AppError(StatusCodes.BAD_REQUEST, 'sort must be newest or oldest');
+  if (type && !['bug', 'feature_request'].includes(type as string)) throw new AppError(StatusCodes.BAD_REQUEST, 'type must be bug or feature_request');
+  if (status && !['open', 'in_progress', 'resolved'].includes(status as string)) throw new AppError(StatusCodes.BAD_REQUEST, 'status must be open, in_progress or resolved');
 
   try {
     const data = await getAllIssues(req.query);
@@ -53,11 +53,11 @@ export const getIssueByIdHandler = async (req: Request,res: Response, next: Next
 
   // validation cheack
   const id = parseInt(req.params.id as string);
-  if (isNaN(id)) return sendError(res, StatusCodes.BAD_REQUEST, 'Invalid issue ID');
+  if (isNaN(id)) throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid issue ID');
 
   try {
     const data = await findIssueById(id);
-    if (!data) return sendError(res, StatusCodes.NOT_FOUND, 'Issue not found');
+    if (!data) throw new AppError(StatusCodes.NOT_FOUND, 'Issue not found');
     return sendSuccess(res, StatusCodes.OK, 'Issue retrived successfully', data);
 
   } catch (err) {
@@ -74,24 +74,24 @@ export const updateIssueHandler = async (req: Request,res: Response, next: NextF
   const { title, description, type, status } = req.body;
   const user = req.user;
 
-  if (isNaN(id)) return sendError(res, StatusCodes.BAD_REQUEST, 'Invalid issue ID');
+  if (isNaN(id)) throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid issue ID');
    
-  if (title && title.length > 150) return sendError(res, StatusCodes.BAD_REQUEST, 'Invalid title (max 150 chars)');
-  if (description && description.length < 20) return sendError(res, StatusCodes.BAD_REQUEST, 'Description must be at least 20 chars');
-  if (type && !['bug', 'feature_request'].includes(type)) return sendError(res, StatusCodes.BAD_REQUEST, 'type must be bug or feature_request');
-  if (status && !['open', 'in_progress', 'resolved'].includes(status as string)) return sendError(res, StatusCodes.BAD_REQUEST, 'status must be open, in_progress or resolved');
+  if (title && title.length > 150) throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid title (max 150 chars)');
+  if (description && description.length < 20) throw new AppError(StatusCodes.BAD_REQUEST, 'Description must be at least 20 chars');
+  if (type && !['bug', 'feature_request'].includes(type)) throw new AppError(StatusCodes.BAD_REQUEST, 'type must be bug or feature_request');
+  if (status && !['open', 'in_progress', 'resolved'].includes(status as string)) throw new AppError(StatusCodes.BAD_REQUEST, 'status must be open, in_progress or resolved');
 
   try {
     // Issue cheak
     const existing = await getRawIssue(id)
-    if (!existing) return sendError(res, StatusCodes.NOT_FOUND, 'Issue not found');
+    if (!existing) throw new AppError(StatusCodes.NOT_FOUND, 'Issue not found');
 
     // Permission cheak just nijer issue update jodi status open thake
     if (user?.role === USER_ROLE.contributor) {
-        if (existing.reporter_id !== user?.id) return sendError(res, StatusCodes.FORBIDDEN, 'Just your issue update');
-        if (existing.status !== 'open') return sendError(res, StatusCodes.CONFLICT, 'Just open status- issue update permision');
+        if (existing.reporter_id !== user?.id) throw new AppError(StatusCodes.FORBIDDEN, 'Just your issue update');
+        if (existing.status !== 'open') throw new AppError(StatusCodes.CONFLICT, 'Just open status- issue update permision');
         // Contributor status change korte parbe na
-        if (status) return sendError(res, StatusCodes.FORBIDDEN, 'Contributor status do not modify');
+        if (status) throw new AppError(StatusCodes.FORBIDDEN, 'Contributor status do not modify');
         
         // Updated obj make
         const updateFields: Record<string, string> = {};
@@ -122,11 +122,11 @@ export const updateIssueHandler = async (req: Request,res: Response, next: NextF
 export const deleteIssueHandler = async (req: Request,res: Response, next: NextFunction)=> {
   //Validation cheak
   const id = parseInt(req.params.id as string);
-  if (isNaN(id)) return sendError(res, StatusCodes.BAD_REQUEST, 'Invalid issue ID');
+  if (isNaN(id)) throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid issue ID');
 
   try {
     const issue = await getRawIssue(id);
-    if (!issue) return sendError(res, 404, 'Issue not found');
+    if (!issue) throw new AppError(StatusCodes.NOT_FOUND, 'Issue not found');
 
     const deleted = await deleteIssue(id);
     if (deleted.rows.length === 0) return sendSuccess(res, StatusCodes.OK, 'Issue deleted successfully');
