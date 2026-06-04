@@ -2,7 +2,7 @@
 
 > A collaborative platform for software teams to report bugs, suggest features, and coordinate resolutions.
 
-**Live URL:** `https://devpulse.onrender.com`
+**Live URL:** `https://postgre-modu-ass-2.vercel.app/`
 
 ---
 
@@ -39,7 +39,7 @@
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/devpulse.git
+git clone https://github.com/SHAHID-CP/L2_Ass2.git
 cd devpulse
 ```
 
