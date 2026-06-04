@@ -4,7 +4,7 @@ import { StatusCodes } from "http-status-codes";
 import config from "../config";
 
 export const globalErrorHandler = (err: any,req: Request,res: Response,next: NextFunction) => {
-
+const modify='Something went very wrong!'
 if(config.node_env === 'development'){
 return sendError(res,
     err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR,
@@ -14,7 +14,7 @@ return sendError(res,
 return sendError(res,
     err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR,
     err.isOperational ? err.message || "Internal Server Error" : 'Something went very wrong!',
-    {name:err.name,stack: err.stack} //production not safe..production a avoied korte hobe
+    modify //production not safe..production a avoied korte hobe
 )
 }
 };
