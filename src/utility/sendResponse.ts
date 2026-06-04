@@ -8,7 +8,7 @@ export const sendSuccess = <T>(res: Response, statusCode: number, message: strin
   });
 };
 
-export const sendError = (res: Response, statusCode: number, message: string, errors?: Record<string, unknown>):Response => {
+export const sendError = (res: Response, statusCode: number, message: string, errors?: unknown):Response => {
   return res.status(statusCode).json({
     success: false,
     message,
@@ -27,7 +27,7 @@ export class AppError extends Error {
 
     if (stack) {
       this.stack = stack;
-    } else {
+    } else if (Error.captureStackTrace){
       Error.captureStackTrace(this, this.constructor);
     }
   }
