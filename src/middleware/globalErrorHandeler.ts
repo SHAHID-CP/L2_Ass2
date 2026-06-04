@@ -13,7 +13,8 @@ return sendError(res,
 }else{
 return sendError(res,
     err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR,
-    err.isOperational ? err.message || "Internal Server Error" : 'Something went very wrong!'
+    err.isOperational ? err.message || "Internal Server Error" : 'Something went very wrong!',
+    err.error
 )
 }
 };
