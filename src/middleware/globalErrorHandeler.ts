@@ -4,18 +4,29 @@ import { StatusCodes } from "http-status-codes";
 import config from "../config";
 
 export const globalErrorHandler = (err: any,req: Request,res: Response,next: NextFunction) => {
-const modify='Something went very wrong!'
+
 if(config.node_env === 'development'){
 return sendError(res,
     err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR,
     err.message || "Internal Server Error",
     {name:err.name,stack: err.stack})
 }else{
-return sendError(res,
-    err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR,
-    err.isOperational ? err.message || "Internal Server Error" : 'Something went very wrong!',
-    modify //production not safe..production a avoied korte hobe
-)
+    if (err.isOperational) {
+        const safeMessage = err.message || "Internal Server Error";
+        return sendError(res,
+        err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR,
+        safeMessage,
+        safeMessage 
+        );
+    } 
+    else {
+        const secureFallback = "Something went very wrong!";
+        return sendError(res,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        secureFallback,
+        secureFallback 
+        );
+    }
 }
 };
 
