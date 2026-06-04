@@ -14,7 +14,7 @@ return sendError(res,
 return sendError(res,
     err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR,
     err.isOperational ? err.message || "Internal Server Error" : 'Something went very wrong!',
-    err.error || 'Something went very wrong!'
+    {name:err.name,stack: err.stack} //production not safe..production a avoied korte hobe
 )
 }
 };
